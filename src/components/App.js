@@ -9,11 +9,13 @@ export const RecipeContext = React.createContext()
 const LOCALSTORAGE_KEY = 'cookingWithReact.recipes'
 
 function App() {
-  const [recipes, setRecipes] = useState(sampleRecipes)
+  const [selectedRecipeId, setSelectedRecipeId] = useState()
+  const [recipes, setRecipes] = useState([])
+  const selectedRecipe = recipes.find(recipe => recipe.id === selectedRecipeId)
 
   useEffect(() => {
     const storedRecipes = JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY))
-    if (storedRecipes != null) setRecipes(storedRecipes)
+    if (storedRecipes != null && storedRecipes.length > 0) setRecipes(storedRecipes)
   }, [])
 
   useEffect(() => {
@@ -23,36 +25,51 @@ function App() {
 
   const recipeContextValue = {
     handleRecipeAdd,
-    handleRecipeDelete
+    handleRecipeDelete,
+    handleRecipeSelect,
+    handleRecipeChange
+  }
+
+  function handleRecipeChange(id, recipe){
+    const newRecipes = [...recipes]
+    const index = newRecipes.findIndex(r => r.id === id)
+    newRecipes[index] = recipe
+    setRecipes(newRecipes)
+  }
+
+  function handleRecipeSelect(id){
+    setSelectedRecipeId(id)
   }
 
   function handleRecipeAdd(){
     const newRecipe = {
       id: uuidv4(),
-      name: 'New',
+      name: '',
       servings: 1,
-      cookTime: '1:00',
-      instructions: 'Instr.',
+      cookTime: '',
+      instructions: '',
       ingredients: [
         {
           id: uuidv4(),
-          name: 'Name',
-          amount: '1 Tbs'
+          name: '',
+          amount: ''
         }
       ]
     }
 
+    setSelectedRecipeId(newRecipe.id)
     setRecipes([...recipes, newRecipe])
   }
 
   function handleRecipeDelete(id){
+    if(selectedRecipeId != null && selectedRecipeId === id) setSelectedRecipeId(undefined)
     setRecipes(recipes.filter(recipe => recipe.id !== id))
   }
 
   return (
     <RecipeContext.Provider value={recipeContextValue}>
       <RecipeList recipes={recipes} />
-      <RecipeEdit />
+      {selectedRecipe && <RecipeEdit recipe={selectedRecipe} setSelectedRecipeId={setSelectedRecipeId}/>}
     </RecipeContext.Provider>
   );
 }
